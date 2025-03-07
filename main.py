@@ -1,12 +1,20 @@
 import streamlit as st
 import requests
 from decouple import config
+import unicodedata
+import re
 
 # Configuración de la API de Canvas
 API_URL = 'https://canvas.uautonoma.cl/api/v1/'
 API_TOKEN = config("TOKEN")
 HEADERS = {"Authorization": f"Bearer {API_TOKEN}","Content-Type": "application/json"}
 
+def clean_string(input_string: str) -> str:
+    cleaned = input_string.strip().lower()
+    cleaned = unicodedata.normalize('NFD', cleaned)
+    cleaned = re.sub(r'[^\w\s.,!?-]', '', cleaned)
+    cleaned = re.sub(r'[\u0300-\u036f]', '', cleaned)
+    return cleaned
 # Función para obtener los foros de un curso
 def get_course_forums(course_id):
     url = f"{API_URL}/courses/{course_id}/discussion_topics"
@@ -18,9 +26,8 @@ def get_course_forums(course_id):
         return []
 
 # Función para desactivar respuestas hilvanadas en un foro
-def disable_threaded_replies(course_id, forum_id):
+def disable_threaded_replies(course_id, forum_id, data):
     url = f"{API_URL}/courses/{course_id}/discussion_topics/{forum_id}"
-    data = {"discussion_type": "threaded", "assignment": {"peer_reviews": False}}  # La otra opcion -> not_threaded
     response = requests.put(url, headers=HEADERS, json=data)  # Usa `json=data` para enviar el cuerpo en formato JSON
     if response.status_code == 200:
         #st.success(f"Respuestas hilvanadas desactivadas en el foro {forum_id} del curso {course_id}")
@@ -45,7 +52,12 @@ def process_courses(course_ids):
 
         for forum in forums:
             forum_id = forum.get("id")
-            if disable_threaded_replies(course_id, forum_id):
+            forum_name = forum.get("title")
+            if clean_string(forum_name) == "foro academico":
+                data = {"discussion_type": "threaded", "assignment": {"peer_reviews": False}}
+            else:
+                data = {"discussion_type": "threaded"}
+            if disable_threaded_replies(course_id, forum_id, data):
                 successful_updates += 1
             else:
                 failed_updates += 1
