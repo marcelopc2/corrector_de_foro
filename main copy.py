@@ -9,7 +9,7 @@ HEADERS = {"Authorization": f"Bearer {API_TOKEN}","Content-Type": "application/j
 
 # Función para obtener los foros de un curso
 def get_course_forums(course_id):
-    url = f"{API_URL}/courses/{course_id}/discussion_topics"
+    url = f"{API_URL}courses/{course_id}/discussion_topics"
     response = requests.get(url, headers=HEADERS)
     if response.status_code == 200:
         return response.json()
@@ -18,9 +18,21 @@ def get_course_forums(course_id):
         return []
 
 # Función para desactivar respuestas hilvanadas en un foro
+def disable_peer_reviews(course_id, assignment_id):
+    url = f"{API_URL}courses/{course_id}/assignments/{assignment_id}"
+    print(url)
+    data = {"peer_reviews": False}
+    response = requests.put(url, headers=HEADERS, json=data)  # Usa `json=data` para enviar el cuerpo en formato JSON
+    if response.status_code == 200:
+        #st.success(f"Respuestas hilvanadas desactivadas en el foro {forum_id} del curso {course_id}")
+        return True
+    else:
+        st.error(f"Error al actualizar el foro {assignment_id} del curso {course_id}: {response.status_code}")
+        return False
+    
 def disable_threaded_replies(course_id, forum_id):
-    url = f"{API_URL}/courses/{course_id}/discussion_topics/{forum_id}"
-    data = {"discussion_type": "threaded", "assignment": {"peer_reviews": False}}  # La otra opcion -> not_threaded
+    url = f"{API_URL}courses/{course_id}/discussion_topics/{forum_id}"
+    data = {"discussion_type": "threaded"}  # La otra opcion -> not_threaded
     response = requests.put(url, headers=HEADERS, json=data)  # Usa `json=data` para enviar el cuerpo en formato JSON
     if response.status_code == 200:
         #st.success(f"Respuestas hilvanadas desactivadas en el foro {forum_id} del curso {course_id}")
@@ -45,7 +57,10 @@ def process_courses(course_ids):
 
         for forum in forums:
             forum_id = forum.get("id")
+            assignment_id = forum.get("assignment").get("id") if forum.get("assignment") else None
             if disable_threaded_replies(course_id, forum_id):
+                if assignment_id:
+                    disable_peer_reviews(course_id, assignment_id)
                 successful_updates += 1
             else:
                 failed_updates += 1
@@ -55,7 +70,7 @@ def process_courses(course_ids):
 
     # Resultado final
     st.write(f"Se procesaron {total_courses} cursos.")
-    st.success(f"Foros actualizados exitosamente: {successful_updates} - Desactivados la revision por pares")
+    st.success(f"Foros actualizados exitosamente: {successful_updates}")
     if failed_updates > 0:
         st.error(f"Errores en la actualización: {failed_updates}")
 
