@@ -20,7 +20,7 @@ def get_course_forums(course_id):
 # Función para desactivar respuestas hilvanadas en un foro
 def disable_threaded_replies(course_id, forum_id):
     url = f"{API_URL}/courses/{course_id}/discussion_topics/{forum_id}"
-    data = {"discussion_type": "threaded"}  # La otra opcion -> not_threaded
+    data = {"discussion_type": "threaded", "peer_reviews":False}  # La otra opcion -> not_threaded
     response = requests.put(url, headers=HEADERS, json=data)  # Usa `json=data` para enviar el cuerpo en formato JSON
     if response.status_code == 200:
         #st.success(f"Respuestas hilvanadas desactivadas en el foro {forum_id} del curso {course_id}")
@@ -62,6 +62,7 @@ def process_courses(course_ids):
 # Interfaz de usuario de Streamlit
 st.title("Gestión de Foros en Canvas")
 st.write("Ingrese los IDs de los cursos para desactivar las respuestas hilvanadas en todos los foros.")
+st.info("Se ha agregado de la desactivación de las revisiones entre pares. 07/03/2025")
 
 course_ids_input = st.text_area(
     "IDs de cursos (separados por comas, espacios o saltos de línea)",
