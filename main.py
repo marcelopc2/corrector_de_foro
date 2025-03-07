@@ -55,7 +55,7 @@ def process_courses(course_ids):
 
     # Resultado final
     st.write(f"Se procesaron {total_courses} cursos.")
-    st.success(f"Foros actualizados exitosamente: {successful_updates} - Desactivados la revision por pares")
+    st.success(f"{successful_updates} foros actualizados exitosament - Respuestas hilvanadas y revision entre pares DESACTIVADAS.")
     if failed_updates > 0:
         st.error(f"Errores en la actualización: {failed_updates}")
 
